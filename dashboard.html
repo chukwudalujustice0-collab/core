@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-loading">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ceetify Core | Admin Dashboard</title>
+  <meta name="theme-color" content="#064e3b" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#eef8f3;
+      --bg2:#e4f5ec;
+      --panel:#ffffff;
+      --panel2:#f7fffb;
+      --text:#06291f;
+      --muted:#64756e;
+      --line:#d7ebe2;
+      --green:#047857;
+      --green2:#059669;
+      --green3:#10b981;
+      --dark:#022c22;
+      --red:#dc2626;
+      --orange:#d97706;
+      --blue:#2563eb;
+      --shadow:0 18px 50px rgba(4,120,87,.13);
+      --radius:24px;
+    }
+
+    html.auth-loading body{
+      visibility:hidden;
+    }
+
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+
+    body{
+      background:
+        radial-gradient(circle at top left, rgba(16,185,129,.24), transparent 32%),
+        linear-gradient(135deg,var(--bg),var(--bg2));
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    a{
+      color:inherit;
+      text-decoration:none;
+    }
+
+    .app{
+      display:grid;
+      grid-template-columns:280px 1fr;
+      min-height:100vh;
+    }
+
+    .sidebar{
+      background:linear-gradient(180deg,#022c22,#064e3b);
+      color:#fff;
+      padding:22px;
+      position:sticky;
+      top:0;
+      height:100vh;
+      overflow:auto;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:30px;
+    }
+
+    .logo{
+      width:48px;
+      height:48px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg,#10b981,#ffffff);
+      color:#022c22;
+      font-weight:900;
+      font-size:22px;
+      box-shadow:0 12px 30px rgba(16,185,129,.3);
+    }
+
+    .brand h1{
+      font-size:18px;
+      line-height:1.1;
+    }
+
+    .brand p{
+      font-size:12px;
+      color:#bbf7d0;
+      margin-top:4px;
+    }
+
+    .nav{
+      display:grid;
+      gap:8px;
+    }
+
+    .nav a{
+      padding:13px 14px;
+      border-radius:16px;
+      color:#dcfce7;
+      font-size:14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border:1px solid transparent;
+    }
+
+    .nav a.active,
+    .nav a:hover{
+      background:rgba(255,255,255,.12);
+      border-color:rgba(255,255,255,.18);
+      color:#fff;
+    }
+
+    .main{
+      padding:24px;
+      overflow:hidden;
+    }
+
+    .topbar{
+      background:rgba(255,255,255,.84);
+      backdrop-filter:blur(18px);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      margin-bottom:22px;
+    }
+
+    .topbar h2{
+      font-size:22px;
+      color:var(--dark);
+    }
+
+    .topbar p{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:4px;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border:0;
+      border-radius:14px;
+      padding:12px 15px;
+      font-weight:800;
+      cursor:pointer;
+      background:var(--green);
+      color:white;
+      box-shadow:0 10px 25px rgba(4,120,87,.18);
+    }
+
+    .btn.secondary{
+      background:#ecfdf5;
+      color:#065f46;
+      border:1px solid #bbf7d0;
+      box-shadow:none;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+      margin-bottom:18px;
+    }
+
+    .card{
+      background:rgba(255,255,255,.9);
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+
+    .metric span{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .metric strong{
+      display:block;
+      font-size:25px;
+      color:var(--dark);
+      margin-top:8px;
+    }
+
+    .metric small{
+      display:block;
+      margin-top:8px;
+      color:var(--green);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .section-grid{
+      display:grid;
+      grid-template-columns:1.3fr .7fr;
+      gap:18px;
+    }
+
+    .section-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:14px;
+    }
+
+    .section-title h3{
+      font-size:17px;
+      color:var(--dark);
+    }
+
+    .table-wrap{
+      overflow:auto;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:760px;
+    }
+
+    th,td{
+      text-align:left;
+      padding:13px 10px;
+      border-bottom:1px solid var(--line);
+      font-size:13px;
+    }
+
+    th{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .pill{
+      display:inline-flex;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      background:#ecfdf5;
+      color:#047857;
+    }
+
+    .pill.failed{
+      background:#fef2f2;
+      color:var(--red);
+    }
+
+    .pill.pending{
+      background:#fff7ed;
+      color:var(--orange);
+    }
+
+    .quick{
+      display:grid;
+      gap:10px;
+    }
+
+    .quick a{
+      background:var(--panel2);
+      border:1px solid var(--line);
+      padding:14px;
+      border-radius:18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:850;
+      color:#064e3b;
+    }
+
+    .status{
+      margin-top:16px;
+      padding:14px;
+      border-radius:18px;
+      background:#ecfdf5;
+      border:1px solid #bbf7d0;
+      color:#065f46;
+      font-size:13px;
+      line-height:1.5;
+      font-weight:650;
+    }
+
+    .mobile-menu{
+      display:none;
+    }
+
+    .empty{
+      color:var(--muted);
+      font-size:13px;
+      padding:20px 8px;
+    }
+
+    @media(max-width:980px){
+      .app{
+        grid-template-columns:1fr;
+      }
+
+      .sidebar{
+        position:fixed;
+        inset:0 auto 0 0;
+        width:280px;
+        z-index:20;
+        transform:translateX(-105%);
+        transition:.25s ease;
+      }
+
+      body.menu-open .sidebar{
+        transform:translateX(0);
+      }
+
+      .mobile-menu{
+        display:inline-flex;
+      }
+
+      .grid{
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .section-grid{
+        grid-template-columns:1fr;
+      }
+
+      .topbar{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+    }
+
+    @media(max-width:560px){
+      .main{
+        padding:14px;
+      }
+
+      .grid{
+        grid-template-columns:1fr;
+      }
+
+      .topbar h2{
+        font-size:19px;
+      }
+
+      .card{
+        padding:15px;
+      }
+
+      .actions{
+        width:100%;
+      }
+
+      .btn{
+        flex:1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">C</div>
+        <div>
+          <h1>Ceetify Core</h1>
+          <p>building tomorrow ecosystem</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="admin.dashboard.html" class="active">Dashboard <b>●</b></a>
+        <a href="admin.payment-engine.html">Payment Engine <b>›</b></a>
+        <a href="admin.transactions.html">Transactions <b>›</b></a>
+        <a href="admin.wallets.html">Wallets <b>›</b></a>
+        <a href="admin.users.html">Users <b>›</b></a>
+        <a href="admin.apps.html">Apps <b>›</b></a>
+        <a href="admin.virtual-accounts.html">Virtual Accounts <b>›</b></a>
+        <a href="admin.ledger.html">Ledger <b>›</b></a>
+        <a href="admin.audit-logs.html">Audit Logs <b>›</b></a>
+        <a href="admin.settings.html">Settings <b>›</b></a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2>Central Management Dashboard</h2>
+          <p id="adminLabel">Loading secure admin session...</p>
+        </div>
+
+        <div class="actions">
+          <button class="btn secondary mobile-menu" onclick="toggleMenu()">Menu</button>
+          <a class="btn secondary" href="admin.payment-engine.html">Payment Engine</a>
+          <button class="btn" onclick="loadDashboard()">Refresh</button>
+        </div>
+      </header>
+
+      <section class="grid">
+        <div class="card metric">
+          <span>Total Users</span>
+          <strong id="totalUsers">0</strong>
+          <small>All ecosystem users</small>
+        </div>
+
+        <div class="card metric">
+          <span>Total Wallets</span>
+          <strong id="totalWallets">0</strong>
+          <small>User and app wallets</small>
+        </div>
+
+        <div class="card metric">
+          <span>Total Transactions</span>
+          <strong id="totalTransactions">0</strong>
+          <small>Core processed records</small>
+        </div>
+
+        <div class="card metric">
+          <span>Total Revenue</span>
+          <strong id="totalRevenue">₦0</strong>
+          <small>Charges and commissions</small>
+        </div>
+
+        <div class="card metric">
+          <span>Deposits</span>
+          <strong id="totalDeposits">₦0</strong>
+          <small>Successful funding</small>
+        </div>
+
+        <div class="card metric">
+          <span>Withdrawals</span>
+          <strong id="totalWithdrawals">₦0</strong>
+          <small>Successful payouts</small>
+        </div>
+
+        <div class="card metric">
+          <span>Pending Settlements</span>
+          <strong id="pendingSettlements">0</strong>
+          <small>Awaiting settlement</small>
+        </div>
+
+        <div class="card metric">
+          <span>Failed Transactions</span>
+          <strong id="failedTransactions">0</strong>
+          <small>Needs attention</small>
+        </div>
+      </section>
+
+      <section class="section-grid">
+        <div class="card">
+          <div class="section-title">
+            <h3>Recent Transactions</h3>
+            <a href="admin.transactions.html" class="pill">View all</a>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Reference</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Provider</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="transactionRows">
+                <tr>
+                  <td colspan="6" class="empty">Loading transactions...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="section-title">
+              <h3>Quick Access</h3>
+            </div>
+
+            <div class="quick">
+              <a href="admin.payment-engine.html">Open Payment Engine <span>›</span></a>
+              <a href="admin.virtual-accounts.html">Manage Virtual Accounts <span>›</span></a>
+              <a href="admin.ledger.html">View Ledger <span>›</span></a>
+              <a href="admin.apps.html">Manage App Integrations <span>›</span></a>
+              <a href="admin.roles.html">Roles & Permissions <span>›</span></a>
+              <a href="admin.audit-logs.html">Security Audit Logs <span>›</span></a>
+            </div>
+          </div>
+
+          <div class="status" id="systemStatus">
+            Checking Ceetify Core system status...
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://hobyliidpbzuvjhznqiv.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvYnlsaWlkcGJ6dXZqaHpucWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxOTYzNzksImV4cCI6MjA5MTc3MjM3OX0.D2x8DFYzahujc2zK46vzLPZFJ-PGn9xgbgWu15JVBwk";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth:{
+        persistSession:true,
+        autoRefreshToken:true,
+        detectSessionInUrl:true,
+        flowType:"pkce"
+      }
+    });
+
+    let currentUser = null;
+    let currentAdmin = null;
+
+    function toggleMenu(){
+      document.body.classList.toggle("menu-open");
+    }
+
+    function money(value){
+      const amount = Number(value || 0);
+      return "₦" + amount.toLocaleString("en-NG", {
+        minimumFractionDigits:0,
+        maximumFractionDigits:2
+      });
+    }
+
+    function safeText(value, fallback = "—"){
+      return value === null || value === undefined || value === "" ? fallback : String(value);
+    }
+
+    async function protectPage(){
+      const { data:{ session }, error } = await client.auth.getSession();
+
+      if(error || !session || !session.user){
+        location.replace("login.html?next=admin.dashboard.html");
+        return false;
+      }
+
+      currentUser = session.user;
+
+      const { data: admin, error: adminError } = await client
+        .from("admin_users")
+        .select("id,user_id,full_name,email,role,status,is_super_admin")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      if(adminError || !admin){
+        document.body.innerHTML = accessDenied("Your account is not registered as a Ceetify Core admin.");
+        document.documentElement.classList.remove("auth-loading");
+        return false;
+      }
+
+      if(admin.status && admin.status !== "active"){
+        document.body.innerHTML = accessDenied("Your admin account is not active.");
+        document.documentElement.classList.remove("auth-loading");
+        return false;
+      }
+
+      if(admin.is_super_admin !== true && admin.role !== "super_admin"){
+        const allowed = await checkPagePermission(admin.id, "admin.dashboard.html");
+        if(!allowed){
+          document.body.innerHTML = accessDenied("You do not have permission to access this dashboard.");
+          document.documentElement.classList.remove("auth-loading");
+          return false;
+        }
+      }
+
+      currentAdmin = admin;
+      document.getElementById("adminLabel").textContent =
+        `${admin.full_name || admin.email || currentUser.email} • Ceetify Core Admin`;
+
+      document.documentElement.classList.remove("auth-loading");
+      return true;
+    }
+
+    async function checkPagePermission(adminId, page){
+      const { data, error } = await client
+        .from("admin_page_permissions")
+        .select("id")
+        .eq("admin_user_id", adminId)
+        .eq("page_key", page)
+        .eq("can_access", true)
+        .maybeSingle();
+
+      return !error && !!data;
+    }
+
+    function accessDenied(message){
+      return `
+        <div style="min-height:100vh;display:grid;place-items:center;background:#eef8f3;padding:20px;font-family:Inter,system-ui">
+          <div style="max-width:460px;background:white;border:1px solid #d7ebe2;border-radius:26px;padding:28px;box-shadow:0 18px 50px rgba(4,120,87,.13);text-align:center">
+            <div style="width:62px;height:62px;border-radius:20px;background:#fee2e2;color:#dc2626;display:grid;place-items:center;margin:0 auto 16px;font-size:28px;font-weight:900">!</div>
+            <h2 style="color:#022c22;margin-bottom:8px">Access Restricted</h2>
+            <p style="color:#64756e;line-height:1.6;margin-bottom:20px">${message}</p>
+            <a href="login.html" style="display:inline-block;background:#047857;color:#fff;padding:13px 18px;border-radius:14px;text-decoration:none;font-weight:800">Go to Login</a>
+          </div>
+        </div>
+      `;
+    }
+
+    async function countTable(table, filterBuilder){
+      try{
+        let query = client.from(table).select("id", { count:"exact", head:true });
+        if(filterBuilder) query = filterBuilder(query);
+        const { count, error } = await query;
+        if(error) return 0;
+        return count || 0;
+      }catch(e){
+        return 0;
+      }
+    }
+
+    async function sumColumn(table, column, filterBuilder){
+      try{
+        let query = client.from(table).select(column);
+        if(filterBuilder) query = filterBuilder(query);
+        const { data, error } = await query.limit(1000);
+        if(error || !data) return 0;
+        return data.reduce((sum, row) => sum + Number(row[column] || 0), 0);
+      }catch(e){
+        return 0;
+      }
+    }
+
+    async function loadDashboard(){
+      document.getElementById("systemStatus").textContent = "Refreshing Ceetify Core dashboard...";
+
+      const [
+        users,
+        wallets,
+        transactions,
+        failed,
+        pendingSettlements,
+        deposits,
+        withdrawals,
+        revenue
+      ] = await Promise.all([
+        countTable("profiles"),
+        countTable("wallets"),
+        countTable("transactions"),
+        countTable("transactions", q => q.eq("status", "failed")),
+        countTable("settlements", q => q.eq("status", "pending")),
+        sumColumn("transactions", "amount", q => q.eq("status", "success").eq("type", "deposit")),
+        sumColumn("transactions", "amount", q => q.eq("status", "success").eq("type", "withdrawal")),
+        sumColumn("transactions", "fee_amount", q => q.eq("status", "success"))
+      ]);
+
+      document.getElementById("totalUsers").textContent = users;
+      document.getElementById("totalWallets").textContent = wallets;
+      document.getElementById("totalTransactions").textContent = transactions;
+      document.getElementById("failedTransactions").textContent = failed;
+      document.getElementById("pendingSettlements").textContent = pendingSettlements;
+      document.getElementById("totalDeposits").textContent = money(deposits);
+      document.getElementById("totalWithdrawals").textContent = money(withdrawals);
+      document.getElementById("totalRevenue").textContent = money(revenue);
+
+      await loadRecentTransactions();
+
+      document.getElementById("systemStatus").textContent =
+        "Ceetify Core dashboard is active. Payment Engine, Wallet Engine, Ledger, Apps, and Audit sections are ready to connect.";
+    }
+
+    async function loadRecentTransactions(){
+      const tbody = document.getElementById("transactionRows");
+
+      try{
+        const { data, error } = await client
+          .from("transactions")
+          .select("id,reference,type,amount,status,provider_name,created_at")
+          .order("created_at", { ascending:false })
+          .limit(10);
+
+        if(error || !data || data.length === 0){
+          tbody.innerHTML = `<tr><td colspan="6" class="empty">No transactions found yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.map(tx => {
+          const statusClass =
+            tx.status === "failed" ? "failed" :
+            tx.status === "pending" ? "pending" : "";
+
+          return `
+            <tr>
+              <td>${safeText(tx.reference)}</td>
+              <td>${safeText(tx.type)}</td>
+              <td>${money(tx.amount)}</td>
+              <td><span class="pill ${statusClass}">${safeText(tx.status)}</span></td>
+              <td>${safeText(tx.provider_name, "Core")}</td>
+              <td>${tx.created_at ? new Date(tx.created_at).toLocaleString() : "—"}</td>
+            </tr>
+          `;
+        }).join("");
+      }catch(e){
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">Unable to load transactions.</td></tr>`;
+      }
+    }
+
+    async function init(){
+      const allowed = await protectPage();
+      if(!allowed) return;
+      await loadDashboard();
+    }
+
+    init();
+  </script>
+</body>
+</html>
